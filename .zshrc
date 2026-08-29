@@ -1,5 +1,5 @@
 # ==============================================================================
-# 🚀 THE ULTIMATE LIGHTWEIGHT DEV DOTFILE (BUT MAKE IT CAMP!_
+# 🚀 THE ULTIMATE LIGHTWEIGHT DEV DOTFILE (BUT MAKE IT CAMP!)
 # A highly optimized, high-contrast, and fun Zsh configuration 
 # for developers who want a fast, responsive terminal with a touch of whimsy.
 # (By @igoru5 // formatting and code review by Gemini)
@@ -71,6 +71,50 @@ newdata() {
   uv init
   uv add pandas numpy matplotlib seaborn duckdb jupyter
   code .
+}
+
+# Advanced Project Scaffolding Utilities
+newfullstack() {
+  local name="${1:-fullstack-app}"
+  print -P "%F{51}🏗️ Scaffolding full-stack architecture: $name...%f"
+  mkdir -p "$name"/{frontend,backend,docs}
+  
+  # Initialize frontend stub
+  cat << 'EOF' > "$name/frontend/README.md"
+# Frontend Workspace
+EOF
+
+  # Initialize backend stub
+  cat << 'EOF' > "$name/backend/README.md"
+# Backend Workspace
+EOF
+
+  cd "$name"
+  code .
+  print -P "%F{46}✨ Full-stack workspace ready!%f"
+}
+
+cleanpy() {
+  print -P "%F{208}🧹 Purging Python cache & Jupyter checkpoints...%f"
+  find . -type f -name "*.pyc" -delete
+  find . -type d -name "__pycache__" -delete
+  find . -type d -name ".ipynb_checkpoints" -exec rm -rf {} + 2>/dev/null
+  print -P "%F{46}✨ Workspace sparkling clean!%f"
+}
+
+killport() {
+  local port=${1}
+  if [[ -z "$port" ]]; then
+    print -P "%F{196}Error: Port number required (e.g., killport 8000).%f"
+    return 1
+  fi
+  local pid=$(lsof -t -i:$port)
+  if [[ -n "$pid" ]]; then
+    kill -9 $pid
+    print -P "%F{46}⚡ Killed process on port $port (PID: $pid)%f"
+  else
+    print -P "%F{214}No active process found on port $port%f"
+  fi
 }
 
 # ==============================================================================
@@ -152,15 +196,50 @@ inspire() {
   print -P "%F{51}💡 Dev Mantra: %F{231}${quotes[$((RANDOM % ${#quotes[@]} + 1))]}%f"
 }
 
+excuse() {
+  local -a excuses=(
+    "It must be a localized DNS propagation quirk."
+    "The cosmic rays flipped a bit in the cache layer."
+    "That's not a bug, it's an undocumented asynchronous feature."
+    "It worked seamlessly on my machine in the alternate timeline."
+    "The container felt lonely and decided to restart itself."
+  )
+  print -P "%F{208}🛡️ Professional Excuse: %F{231}${excuses[$((RANDOM % ${#excuses[@]} + 1))]}%f"
+}
+
 # ==============================================================================
-# 🎨 HIGH-CONTRAST OPTIMISED THEME ENGINE
+# 🎨 HIGH-CONTRAST OPTIMISED THEME ENGINE (WITH CONTRIBUTOR HOOK)
 # ==============================================================================
+#
+# HOW TO ADD A NEW CUSTOM THEME (CONTRIBUTOR GUIDE):
+#   1. Increment the total theme roll modulo range in `set_theme` (e.g. % 16).
+#   2. Add your theme name string to the `case "$choice"` argument matcher.
+#   3. Create a new numerical case block below (e.g. `15)`) mapping out:
+#      - c_frame, c_user, c_path, c_accent: 256-color terminal integer codes
+#      - t_name: Your theme's display title
+#      - t_greeting: A whimsical status quote with an emoji
+#      - a1 through a4: Exactly 8-character wide ASCII art lines for the banner
+#   4. Append a corresponding preview swatch line inside the `themes()` function.
+# ------------------------------------------------------------------------------
 
 set_theme() {
   local choice="${1:l}"
   local theme_roll
   local a1 a2 a3 a4
   local bar_top bar_bot hl_path
+
+  if [[ -z "$CI" && -n "$PS1" ]]; then
+    local -a color_codes=("208" "114" "045" "209" "213" "051" "220" "197")
+    print -n "🎨 Shifting aesthetic personality [ "
+    for i in {1..8}; do
+      local b1="${color_codes[$((RANDOM % ${#color_codes[@]} + 1))]}"
+      local b2="${color_codes[$((RANDOM % ${#color_codes[@]} + 1))]}"
+      local b3="${color_codes[$((RANDOM % ${#color_codes[@]} + 1))]}"
+      print -P -n "\r🎨 Shifting aesthetic personality [ %F{${b1}}██%f%F{${b2}}██%f%F{${b3}}██%f ]"
+      sleep 0.08
+    done
+    print "\r                                                              \r"
+  fi
 
   if [[ -z "$choice" || "$choice" == "random" ]]; then
     theme_roll=$((RANDOM % 15))
@@ -185,7 +264,6 @@ set_theme() {
     esac
   fi
 
-  # Optimized high-contrast palette calibrated for pure black background displays
   case $theme_roll in
     0)
       c_frame=208; c_user=221; c_path=214; c_accent=202; t_name="Autumn Dev"; t_greeting="(🍂 ˘ ᵕ ˘ ) Warm cider and crisp code."
@@ -262,7 +340,6 @@ set_theme() {
   PROMPT="%F{$c_frame}╭─[ %F{$c_user}%n %F{$c_frame}@ %m ]─[ %F{$c_path}%~ %F{$c_frame}]
 ╰─%F{$c_accent}❯%f "
 
-  # Highly efficient cached check for syntax-highlighting plugins
   for hl_path in /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
                  /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
     if [[ -f "$hl_path" ]]; then
@@ -275,24 +352,9 @@ set_theme() {
 }
 
 # ==============================================================================
-# 📋 DYNAMIC CHEAT SHEETS  (rewritten for guaranteed alignment)
+# 📋 DYNAMIC CHEAT SHEETS
 # ==============================================================================
-#
-# WHY THE OLD BOX BROKE:
-#   1. The title line used hand-counted spaces on both sides of $t_name, but
-#      $t_name is a different length for every theme ("Ocean" vs
-#      "Dachshund Lover"), so it could only ever be correct for one theme.
-#   2. Emoji (✨) count as ONE character to the shell but render as TWO
-#      terminal columns on macOS, silently shifting anything padded by hand.
-#   3. Every row's padding was typed manually, which is easy to miscount
-#      and impossible to verify at a glance.
-#
-# THE FIX: never hand-count spaces. Compute padding from the real string
-# length at runtime, and keep box interior text plain ASCII (no emoji)
-# so "1 character" always equals "1 terminal column".
-# ------------------------------------------------------------------------
 
-# Pad (or truncate) $1 to exactly $2 visible columns.
 _cs_pad() {
   local s="$1" w="$2" len=${#1} e=""
   if (( len >= w )); then
@@ -303,19 +365,16 @@ _cs_pad() {
   fi
 }
 
-# Top/middle/bottom border, e.g. _cs_border "╭" "╮"
 _cs_border() {
   local left="$1" right="$2" e=""
   print -P "${FRAME}${left}${(l:78::─:)e}${right}%f"
 }
 
-# Empty row (keeps the interior exactly 78 columns wide, matching the border)
 _cs_blank() {
   local e=""
   print -P "${FRAME}│${(l:78:: :)e}│%f"
 }
 
-# A "command / description" row. $3 = label column width (default 30).
 _cs_row() {
   local label="$1" desc="$2" labelw="${3:-30}"
   local plabel="$(_cs_pad "$label" "$labelw")"
@@ -324,14 +383,12 @@ _cs_row() {
   print -P "${FRAME}│ ${PATHC}${plabel}${FRAME}${descpart} │%f"
 }
 
-# A section header row, e.g. "GIT WORKFLOW"
 _cs_header() {
   local content="$(_cs_pad "$1" 76)"
   print -P "${FRAME}│ ${USERC}${content}${FRAME} │%f"
 }
 
 cheatsheet() {
-  # Snapshot the current theme's colors as %F tokens for print -P
   local FRAME="%F{$c_frame}" PATHC="%F{$c_path}" USERC="%F{$c_user}"
   local title="* ${t_name} CHEAT SHEET *"
   local tlen=${#title}
@@ -362,6 +419,8 @@ cheatsheet() {
 
   _cs_header "DATA, PYTHON & DEV"
   _cs_row "newdata <x>" "Create data project + uv env + VS Code"
+  _cs_row "newfullstack <x>" "Scaffold fullstack app (frontend/backend)"
+  _cs_row "cleanpy, killport" "Purge python cache, kill stuck port"
   _cs_row "py, pip, ports" "Python3, pip3, view active local ports"
   _cs_row "myip" "Check external network IP address"
   _cs_blank
@@ -379,6 +438,7 @@ cheatsheet() {
   _cs_row "magic8, flip" "Ask Magic 8-Ball or flip a coin"
   _cs_row "roll <sides>" "Roll a die (default 6-sided)"
   _cs_row "tarot, inspire" "3-card tarot spread or dev mantra"
+  _cs_row "excuse" "Professional software excuse generator"
   _cs_row "dogfact, dadjoke" "Random dog trivia or classic dad joke"
 
   _cs_border "╰" "╯"
@@ -387,21 +447,21 @@ cheatsheet() {
 themes() {
   print -P "\n%F{214}🎨 AVAILABLE THEMES (15 VIBES) 🎨%f"
   print -P "Type %F{110}theme <name>%f to switch, or %F{110}theme random%f to roll.\n"
-  print -P "  %F{208}██%F{221}██%F{214}██%F{202}██%f  autumn"
-  print -P "  %F{114}██%F{193}██%F{156}██%F{082}██%f  forest"
-  print -P "  %F{045}██%F{123}██%F{081}██%F{039}██%f  ocean"
-  print -P "  %F{209}██%F{220}██%F{214}██%F{197}██%f  sunset"
-  print -P "  %F{180}██%F{222}██%F{216}██%F{173}██%f  espresso"
-  print -P "  %F{213}██%F{225}██%F{219}██%F{199}██%f  girlypop"
-  print -P "  %F{225}██%F{231}██%F{218}██%F{212}██%f  sakura"
-  print -P "  %F{178}██%F{222}██%F{214}██%F{166}██%f  indie"
-  print -P "  %F{250}██%F{231}██%F{255}██%F{245}██%f  minimalist"
-  print -P "  %F{051}██%F{213}██%F{226}██%F{046}██%f  rainbow"
-  print -P "  %F{213}██%F{159}██%F{231}██%F{205}██%f  lgbtq"
-  print -P "  %F{246}██%F{228}██%F{252}██%F{196}██%f  vinyl"
-  print -P "  %F{114}██%F{192}██%F{156}██%F{082}██%f  plantdad"
-  print -P "  %F{173}██%F{222}██%F{221}██%F{136}██%f  dachshund"
-  print -P "  %F{051}██%F{201}██%F{226}██%F{231}██%f  cmyk\n"
+  print -P "  %F{208}▓▒░%F{221}▓▒░%F{214}▓▒░%F{202}▓▒░%f  autumn"
+  print -P "  %F{114}▓▒░%F{193}▓▒░%F{156}▓▒░%F{082}▓▒░%f  forest"
+  print -P "  %F{045}▓▒░%F{123}▓▒░%F{081}▓▒░%F{039}▓▒░%f  ocean"
+  print -P "  %F{209}▓▒░%F{220}▓▒░%F{214}▓▒░%F{197}▓▒░%f  sunset"
+  print -P "  %F{180}▓▒░%F{222}▓▒░%F{216}▓▒░%F{173}▓▒░%f  espresso"
+  print -P "  %F{213}▓▒░%F{225}▓▒░%F{219}▓▒░%F{199}▓▒░%f  girlypop"
+  print -P "  %F{225}▓▒░%F{231}▓▒░%F{218}▓▒░%F{212}▓▒░%f  sakura"
+  print -P "  %F{178}▓▒░%F{222}▓▒░%F{214}▓▒░%F{166}▓▒░%f  indie"
+  print -P "  %F{250}▓▒░%F{231}▓▒░%F{255}▓▒░%F{245}▓▒░%f  minimalist"
+  print -P "  %F{051}▓▒░%F{213}▓▒░%F{226}▓▒░%F{046}▓▒░%f  rainbow"
+  print -P "  %F{213}▓▒░%F{159}▓▒░%F{231}▓▒░%F{205}▓▒░%f  lgbtq"
+  print -P "  %F{246}▓▒░%F{228}▓▒░%F{252}▓▒░%F{196}▓▒░%f  vinyl"
+  print -P "  %F{114}▓▒░%F{192}▓▒░%F{156}▓▒░%F{082}▓▒░%f  plantdad"
+  print -P "  %F{173}▓▒░%F{222}▓▒░%F{221}▓▒░%F{136}▓▒░%f  dachshund"
+  print -P "  %F{051}▓▒░%F{201}▓▒░%F{226}▓▒░%F{231}▓▒░%f  cmyk\n"
 }
 
 # ==============================================================================
